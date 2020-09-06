@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link
+      rel="icon"
+      href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>📊</text></svg>"
+    />
+    <title>Vue bar chart race - comments raffle</title>
+    <script src="helpers.js"></script>
+    <script src="//unpkg.com/vue@2"></script>
+    <script src="confetti.min.js"></script>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="app">
+      <h1>Vue.js Israel Raffle Machine</h1>
+
+      <div class="countdown" v-if="started">{{timeLeft}}</div>
+
+      <div class="setup" v-if="!started">
+        <div>
+          <label for="interval">Interval</label>
+          <input
+            type="text"
+            id="interval"
+            v-model="interval"
+            placeholder="Interval"
+            required
+          />
+        </div>
+        <div>
+          <label for="steps">Steps</label>
+          <input
+            type="text"
+            id="steps"
+            v-model="steps"
+            placeholder="Steps"
+            required
+          />
+        </div>
+
+        <div>
+          <label for="winners">Winners</label>
+          <input
+            type="text"
+            id="winners"
+            v-model="winners"
+            placeholder="Winners"
+          />
+        </div>
+
+        <input type="file" id="file-selector" ref="file-selector" />
+        <p id="status"></p>
+
+        <button class="start-btn" @click="start()" v-if="!started && loaded">
+          Start
+        </button>
+      </div>
+
+      <div class="content" v-if="loaded">
+        <div class="winners-wrapper" :style="winnersWrapperStyleObj"></div>
+        <div class="numbers">
+          <div v-for="index in items.length">{{index}}.</div>
+        </div>
+        <div class="bars">
+          <transition-group tag="div" name="bar-race" class="chart">
+            <bar
+              v-for="(item, index) in orderedItems"
+              :key="item.id"
+              :item="item"
+              :max="maxVal"
+            ></bar>
+          </transition-group>
+        </div>
+      </div>
+    </div>
+    <div class="credits">
+      Built with 📊 by Dima vishvenetsky (<a
+        href="https://dimshik.com"
+        target="_blank"
+        >DiMsHiK</a
+      >)
+    </div>
+
+    <script id="bar-template" type="text/x-template">
+      <div class="bar-wrapper">
+          <div class="bar" :id="item.id" :style="styleObj"><span class="bar-name">{{ item.name }}</span> <span class="bar-value" v-if="item.value > 0">{{item.value}}</span></div>
+      </div>
+    </script>
+    <script>
+      Vue.component("bar", {
+        template: "#bar-template",
+        props: ["item", "max"],
+        data() {
+          return {
+            animWidth: this.getWidth(),
+          };
+        },
+        computed: {
+          //https://stackoverflow.com/questions/42737034/vue-js-watch-multiple-properties-with-single-handler
+          targetWidth() {
+            return this.getWidth();
+          },
+          styleObj() {
+            return {
+              background: this.item.color,
+              width: `${this.animWidth}%`,
+            };
+          },
+        },
+
+        watch: {
+          targetWidth: function (newW, oldW) {
+            TWEEN(oldW, newW, 1000, (val) => (this.animWidth = val));
+          },
+        },
+
+        methods: {
+          getWidth(value) {
+            const val = value || this.item.value,
+              w = this.max ? (val / this.max) * 100 : 0;
+            return w;
+          },
+        },
+      });
+
+      new Vue({
+        el: "#app",
+        data() {
+          return {
+            items: [],
+            started: false,
+            stepCount: 0,
+            loaded: false,
+            interval: 1000,
+            steps: 60,
+            winners: 10,
+          };
+        },
+        computed: {
+          timeLeft() {
+            return this.steps - this.stepCount;
+          },
+          orderedItems() {
+            // console.log("Reordering...");
+            return this.items.slice().sort((a, b) => b.value - a.value);
+          },
+          winnersWrapperStyleObj() {
+            return { height: `${this.winners * (50 + 8 + 8)}px` };
+          },
+          maxVal() {
+            const max = Math.max.apply(
+              Math,
+              this.items.map((x) => x.value)
+            );
+            return max;
+          },
+        },
+        mounted() {
+          const status = document.getElementById("status");
+
+          if (window.FileList && window.File && window.FileReader) {
+            document
+              .getElementById("file-selector")
+              .addEventListener("change", (event) => {
+                this.items.length = 0;
+                status.textContent = "";
+                const file = event.target.files[0];
+                if (!file.type) {
+                  status.textContent =
+                    "Error: The File.type property does not appear to be supported on this browser.";
+                  return;
+                }
+                if (!file.type.match("text/csv")) {
+                  status.textContent =
+                    "Error: The selected file does not appear to be a CSV.";
+                  return;
+                }
+                const reader = new FileReader();
+                reader.addEventListener("load", (event) => {
+                  this.loaded = true;
+                  this.initData(event.target.result);
+                });
+                reader.readAsText(file);
+              });
+          }
+        },
+        methods: {
+          start() {
+            this.started = true;
+            this.nextStep();
+          },
+          nextStep() {
+            this.stepCount++;
+
+            this.items.forEach((x, i) => {
+              x.value += rnd(this.stepCount * 2);
+              // x.value += rnd(10);
+            });
+
+            if (this.stepCount < this.steps) {
+              setTimeout(this.nextStep, this.interval);
+            } else {
+              // finish
+              confetti.start();
+            }
+          },
+          initData(rawData) {
+            const rawDataArr = rawData
+              .split("\n")
+              .map((data) => data.split(","));
+
+            this.items = rawDataArr
+              .filter((item) => !isNaN(parseInt(item[0])))
+              .map((item) => {
+                return {
+                  id: parseInt(item[0]),
+                  name: item[2],
+                  value: 0,
+                };
+              });
+
+            const randomColors = randomHSLColors(this.items.length);
+
+            for (let i = 0; i < this.items.length; i++) {
+              const color = randomColors[i];
+              this.items[i].color = `hsl(${color.h},${color.s}%,${color.l}%)`;
+            }
+          },
+        },
+      });
+    </script>
+  </body>
+</html>
