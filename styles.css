@@ -17,9 +17,7 @@ body {
   justify-content: space-between;
 }
 
-#file-selector,
-#status {
-  margin-top: 20px;
+.file-selector-wrapper {
   width: 100%;
 }
 
@@ -131,11 +129,4 @@ h1 {
   bottom: 2px;
   right: 2px;
   font-size: 0.7em;
-}
-
-blockquote::before {
-  content: open-quote;
-}
-blockquote::after {
-  content: close-quote;
 }
