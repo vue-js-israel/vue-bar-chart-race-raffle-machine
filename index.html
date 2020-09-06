@@ -60,7 +60,7 @@
       </div>
 
       <div class="content" v-if="loaded">
-        <div class="winners-wrapper" :style="winnersWrapperStyleObj"></div>
+        <div class="winners-wrapper" :class="{finished: timeLeft === 0}" :style="winnersWrapperStyleObj"></div>
         <div class="numbers">
           <div v-for="index in items.length">{{index}}.</div>
         </div>

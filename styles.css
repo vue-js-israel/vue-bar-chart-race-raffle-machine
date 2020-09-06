@@ -51,9 +51,15 @@ body {
 .winners-wrapper {
   width: 100%;
   position: absolute;
-  z-index: 0;
+  z-index: -1;
   outline: 2px dashed tomato;
   pointer-events: none;
+}
+
+.winners-wrapper.finished {
+  outline-width: 4px;
+  outline-color: limegreen;
+  background-color: rgba(50, 238, 50, 0.1);
 }
 
 h1 {
