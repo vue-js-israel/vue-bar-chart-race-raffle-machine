@@ -40,7 +40,6 @@
             required
           />
         </div>
-
         <div>
           <label for="winners">Winners</label>
           <input
@@ -50,17 +49,29 @@
             placeholder="Winners"
           />
         </div>
+        <div>
+          <p>
+            Please upload CSV file with the following structure
+            
+            <blockquote>
+              &lt;ID&gt;,&lt;NAME&gt;
+            </blockquote>
+          </p>
 
-        <input type="file" id="file-selector" ref="file-selector" />
-        <p id="status"></p>
-
+          <input type="file" id="file-selector" ref="file-selector" />
+          <p id="status"></p>
+        </div>
         <button class="start-btn" @click="start()" v-if="!started && loaded">
           Start
         </button>
       </div>
 
       <div class="content" v-if="loaded">
-        <div class="winners-wrapper" :class="{finished: timeLeft === 0}" :style="winnersWrapperStyleObj"></div>
+        <div
+          class="winners-wrapper"
+          :class="{finished: timeLeft === 0}"
+          :style="winnersWrapperStyleObj"
+        ></div>
         <div class="numbers">
           <div v-for="index in items.length">{{index}}.</div>
         </div>

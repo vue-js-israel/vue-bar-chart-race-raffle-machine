@@ -132,3 +132,10 @@ h1 {
   right: 2px;
   font-size: 0.7em;
 }
+
+blockquote::before {
+  content: open-quote;
+}
+blockquote::after {
+  content: close-quote;
+}
